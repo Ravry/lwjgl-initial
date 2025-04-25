@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 
 public class Renderer {
@@ -25,14 +26,16 @@ public class Renderer {
     public static HashMap<String, VisualObject> visualObjectHashMap = new HashMap<>();
 
     private final Camera camera;
-    private final FBO framebuffer;
+    private final FBO framebufferMSAA;
+    private final FBO framebufferIntermediate;
 
     private Canvas canvas;
 
     public Renderer(float width, float height) {
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
 
-        framebuffer = new FBO((int)width, (int)height);
+        framebufferMSAA = new FBO((int)width, (int)height, true);
+        framebufferIntermediate = new FBO((int)width, (int)height, false);
 
         shaderHashMap.put("grid", new Shader("resources/shader/grid/vertex.glsl", "resources/shader/grid/fragment.glsl"));
         shaderHashMap.put("default", new Shader("resources/shader/default/vertex.glsl", "resources/shader/default/fragment.glsl"));
@@ -56,18 +59,22 @@ public class Renderer {
         visualObjectHashMap.put("object", new VisualObject(VisualObject.Primitive.Cube));
         visualObjectHashMap.get("object").matrix.scale(1);
 
-        String arial = Utils.getSystemFontPath("minecraft_font");
+        String arial = Utils.getSystemFontPath("arial");
         Text.init(arial);
 
         canvas = new Canvas(width, height);
-        canvas.addChildren(new Text(50, 50, "", arial, Color.DARK_GRAY));
+        canvas.addChildren(new Text(50, 50, "", arial, Color.GREEN));
+
+        glClearColor(.2f, .2f, .2f, 1.f);
+
+        glActiveTexture(GL_TEXTURE0);
     }
 
     public void render() {
         camera.update();
-        ((Text)(canvas.children.get(0))).literal = "fps: " + (int)(1.0f/ Time.deltaTime) + "\nAbonniert den Kanal";
+        ((Text)(canvas.children.get(0))).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\n";
 
-        framebuffer.bind();
+        framebufferMSAA.bind();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -102,16 +109,20 @@ public class Renderer {
         textureHashMap.get("checkered").unbind();
         shaderHashMap.get("default").unuse();
 
-        framebuffer.unbind();
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferMSAA.getID());
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebufferIntermediate.getID());
+        glBlitFramebuffer(0, 0, Window.width, Window.height, 0, 0, Window.width, Window.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        framebufferMSAA.unbind();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
         glDisable(GL_DEPTH_TEST);
 
-        shaderHashMap.get("screen").use();
-        textureHashMap.get("fbo").bind();
+        shaderHashMap.get("screen").use().setUniformInt("_MainTex", 0);
+        textureHashMap.get("fboIntermediate").bind();
         visualObjectHashMap.get("grid").render();
-        textureHashMap.get("fbo").unbind();
+        textureHashMap.get("fboIntermediate").unbind();
         shaderHashMap.get("screen").unuse();
 
         canvas.render(null);

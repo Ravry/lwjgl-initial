@@ -21,13 +21,19 @@ public class Window {
     private static long handle;
     private final Renderer renderer;
     public static List<ResizeListener> resizeListeners = new ArrayList<>();
+    public static int width, height;
 
     public Window(String title, int width, int height) {
+        Window.width = width;
+        Window.height = height;
         GLFWErrorCallback.createPrint(System.err).set();
 
         if (!glfwInit())
             throw new IllegalStateException("unable to initialize GLFW");
 
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_SAMPLES, 4);
 
         handle = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -46,7 +52,6 @@ public class Window {
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_MULTISAMPLE);
 
         renderer = new Renderer((float)width, (float)height);
 
@@ -62,6 +67,8 @@ public class Window {
 
     private static GLFWFramebufferSizeCallbackI resizeWindow() {
         return (window, width, height) -> {
+            Window.width = width;
+            Window.height = height;
             glViewport(0, 0, width, height);
             for (var resizeListener : resizeListeners)
                 resizeListener.onResize(width, height);
@@ -74,7 +81,6 @@ public class Window {
     }
 
     public void run() {
-        glClearColor(.2f, .2f, .2f, 1.f);
         double lastTime = 0.0f;
 
         while(!glfwWindowShouldClose(handle)) {

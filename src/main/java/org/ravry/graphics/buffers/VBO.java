@@ -27,6 +27,7 @@ public class VBO extends BufferObject {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
+    @Override
     public void delete() {
         glDeleteBuffers(id);
     }

@@ -93,8 +93,8 @@ public class Input {
         lastMouseX = currentMouseX;
         lastMouseY = currentMouseY;
 
-        xoffset *= sensitivity * Time.deltaTime;
-        yoffset *= sensitivity * Time.deltaTime;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
     }
 
     public static Vector2f getMouseOffset() {

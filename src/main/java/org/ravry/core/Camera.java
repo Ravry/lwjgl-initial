@@ -83,8 +83,8 @@ public class Camera extends EngineObject {
     private void handleMouse() {
         Vector2f mouseOffset = Input.getMouseOffset();
 
-        yaw -= mouseOffset.x;
-        pitch -= mouseOffset.y;
+        yaw -= mouseOffset.x * Time.deltaTime;
+        pitch -= mouseOffset.y * Time.deltaTime;
 
         if (pitch > -20.0f) pitch = -20.0f;
         if (pitch < -80.0f) pitch = -80.0f;
@@ -101,8 +101,8 @@ public class Camera extends EngineObject {
         _right.cross(worldUp);
         _right.normalize();
 
-        Vector3f scaledFront = new Vector3f(_front).mul(mouseOffset.y * .25f * (distance / MAX_DISTANCE));
-        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * .25f * (distance / MAX_DISTANCE));
+        Vector3f scaledFront = new Vector3f(_front).mul(mouseOffset.y * Time.deltaTime * .25f * (distance / MAX_DISTANCE));
+        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * Time.deltaTime * .25f * (distance / MAX_DISTANCE));
 
         Vector3f _move = new Vector3f(scaledFront).add(scaledRight);
 

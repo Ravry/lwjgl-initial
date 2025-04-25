@@ -39,7 +39,7 @@ public class Text extends GUIElement {
 
     public static boolean initialized = false;
     public static HashMap<String, FontData> fonts = new HashMap<>();
-    public static final int FONT_SIZE = 24;
+    public static final int FONT_SIZE = 16;
     public static final int BITMAP_SIZE = 256;
 
     public static void init(String ... fontPaths) {

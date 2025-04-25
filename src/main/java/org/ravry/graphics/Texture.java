@@ -14,9 +14,11 @@ import static org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_R;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
+import static org.lwjgl.opengl.GL32.glTexImage2DMultisample;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.ravry.utilities.Logger.LOG_STATE.WARNING_LOG;
+import static org.lwjgl.opengl.GL32.GL_TEXTURE_2D_MULTISAMPLE;
 
 public class Texture {
     private int id;
@@ -93,6 +95,14 @@ public class Texture {
             glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, byteBuffer);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
+    public Texture(int width, int height, int format, int samples) {
+        target = GL_TEXTURE_2D_MULTISAMPLE;
+        id = glGenTextures();
+        bind();
+        glTexImage2DMultisample(target, samples, format, width, height, true);
+        unbind();
     }
 
     public Texture(String[] files) {

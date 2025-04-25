@@ -22,6 +22,7 @@ public class VAO extends BufferObject {
         glBindVertexArray(0);
     }
 
+    @Override
     public void delete() {
         glDeleteVertexArrays(id);
     }

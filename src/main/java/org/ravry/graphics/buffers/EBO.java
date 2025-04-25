@@ -19,6 +19,7 @@ public class EBO extends BufferObject {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
+    @Override
     public void delete() {
         glDeleteBuffers(id);
     }
