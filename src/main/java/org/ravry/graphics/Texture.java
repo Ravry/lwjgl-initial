@@ -1,5 +1,6 @@
 package org.ravry.graphics;
 
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import org.ravry.utilities.Logger;
@@ -15,7 +16,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.ravry.utilities.Logger.LOG_STATE.ERROR_LOG;
+import static org.ravry.utilities.Logger.LOG_STATE.WARNING_LOG;
 
 public class Texture {
     private int id;
@@ -45,7 +46,7 @@ public class Texture {
 
             if (pixels == null)
             {
-                Logger.LOG(ERROR_LOG, "failed to load image - " + stbi_failure_reason());
+                Logger.LOG(WARNING_LOG, "failed to load image - " + stbi_failure_reason());
                 pixels = BufferUtils.createByteBuffer(4 * 2 * 2);
                 pixels.put(new byte[] {
                     (byte)200, 0, (byte)200, (byte)255,
@@ -82,11 +83,14 @@ public class Texture {
         stbi_image_free(imageData.pixels);
     }
 
-    public Texture(int width, int height) {
+    public Texture(int width, int height, int format, @Nullable ByteBuffer byteBuffer) {
         target = GL_TEXTURE_2D;
         id = glGenTextures();
         bind();
-        glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        if (byteBuffer == null)
+            glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+        else
+            glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, byteBuffer);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }

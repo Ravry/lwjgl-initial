@@ -2,11 +2,18 @@ package org.ravry.graphics;
 
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.ravry.core.Camera;
+import org.ravry.core.Input;
+import org.ravry.core.Time;
 import org.ravry.core.VisualObject;
 import org.ravry.graphics.buffers.FBO;
+import org.ravry.gui.Canvas;
+import org.ravry.gui.Text;
+import org.ravry.utilities.Utils;
 
+import java.awt.*;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -20,8 +27,9 @@ public class Renderer {
     private final Camera camera;
     private final FBO framebuffer;
 
-    public Renderer(float width, float height) {
+    private Canvas canvas;
 
+    public Renderer(float width, float height) {
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
 
         framebuffer = new FBO((int)width, (int)height);
@@ -43,14 +51,21 @@ public class Renderer {
         textureHashMap.put("checkered", new Texture("resources/texture/.png"));
 
         visualObjectHashMap.put("grid", new VisualObject(VisualObject.Primitive.Quad));
-        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(90.0f)).scale(50.f);
+        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(90.0f)).scale(20.f);
 
         visualObjectHashMap.put("object", new VisualObject(VisualObject.Primitive.Cube));
         visualObjectHashMap.get("object").matrix.scale(1);
+
+        String arial = Utils.getSystemFontPath("minecraft_font");
+        Text.init(arial);
+
+        canvas = new Canvas(width, height);
+        canvas.addChildren(new Text(50, 50, "", arial, Color.DARK_GRAY));
     }
 
     public void render() {
         camera.update();
+        ((Text)(canvas.children.get(0))).literal = "fps: " + (int)(1.0f/ Time.deltaTime) + "\nAbonniert den Kanal";
 
         framebuffer.bind();
 
@@ -99,10 +114,14 @@ public class Renderer {
         textureHashMap.get("fbo").unbind();
         shaderHashMap.get("screen").unuse();
 
+        canvas.render(null);
+
         glEnable(GL_DEPTH_TEST);
     }
 
     public void terminate() {
+        canvas.delete();
+
         visualObjectHashMap.forEach((_, object) -> {
             object.delete();
         });

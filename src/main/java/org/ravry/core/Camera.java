@@ -3,9 +3,12 @@ package org.ravry.core;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.ravry.graphics.Window;
+import org.ravry.utilities.Logger;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.ravry.utilities.Logger.LOG_STATE.DEFAULT_LOG;
 
 public class Camera extends EngineObject {
     public enum CameraMode {
@@ -98,8 +101,8 @@ public class Camera extends EngineObject {
         _right.cross(worldUp);
         _right.normalize();
 
-        Vector3f scaledFront = new Vector3f(_front).mul(mouseOffset.y * .2f * (distance / MAX_DISTANCE));
-        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * .2f * (distance / MAX_DISTANCE));
+        Vector3f scaledFront = new Vector3f(_front).mul(mouseOffset.y * .25f * (distance / MAX_DISTANCE));
+        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * .25f * (distance / MAX_DISTANCE));
 
         Vector3f _move = new Vector3f(scaledFront).add(scaledRight);
 
@@ -139,5 +142,27 @@ public class Camera extends EngineObject {
 
     public Matrix4f getViewMatrix() {
         return new Matrix4f().lookAt(position, front, up);
+    }
+
+    public Vector3f screenPosToWorldPos(Vector2f screenPos, float depth) {
+        float ndcX = screenPos.x * 2.0f - 1.0f;
+        float ndcY = screenPos.y * 2.0f - 1.0f;
+        float ndcZ = depth;
+
+        Vector4f ndcPos = new Vector4f(ndcX, ndcY, ndcZ, 1.0f);
+
+        Matrix4f viewProjMatrix = new Matrix4f(projection).mul(getViewMatrix());
+        Matrix4f invViewProjMatrix = new Matrix4f(viewProjMatrix).invert();
+
+        Vector4f worldPos = ndcPos;
+        worldPos.mul(invViewProjMatrix);
+
+        if (worldPos.w != 0.0f) {
+            worldPos.div(worldPos.w);
+        }
+
+        Vector3f result = new Vector3f(worldPos.x, worldPos.y, worldPos.z);
+        Logger.LOG(DEFAULT_LOG, "World Position: " + result);
+        return result;
     }
 }

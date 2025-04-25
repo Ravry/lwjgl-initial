@@ -2,6 +2,7 @@ package org.ravry.graphics;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
@@ -61,6 +62,13 @@ public class Shader {
         FloatBuffer vectorBuffer = BufferUtils.createFloatBuffer(3);
         vector.get(vectorBuffer);
         glUniform3fv(glGetUniformLocation(id, name), vectorBuffer);
+        return this;
+    }
+
+    public Shader setUniformVec4(String name, Vector4f vector) {
+        FloatBuffer vectorBuffer = BufferUtils.createFloatBuffer(4);
+        vector.get(vectorBuffer);
+        glUniform4fv(glGetUniformLocation(id, name), vectorBuffer);
         return this;
     }
 

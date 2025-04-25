@@ -1,10 +1,12 @@
 package org.ravry.graphics.buffers;
 
+import org.lwjgl.system.MemoryUtil;
 import org.ravry.graphics.Renderer;
 import org.ravry.graphics.Texture;
 import org.ravry.graphics.Window;
 
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class FBO extends BufferObject {
     private int rboDepth;
@@ -12,7 +14,7 @@ public class FBO extends BufferObject {
     public FBO(int width, int height) {
         id = glGenFramebuffers();
         bind();
-        Renderer.textureHashMap.put("fbo", new Texture(width, height));
+        Renderer.textureHashMap.put("fbo", new Texture(width, height, GL_RGBA, null));
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").getID(), 0);
 
         rboDepth = glGenRenderbuffers();
@@ -28,7 +30,7 @@ public class FBO extends BufferObject {
         Window.resizeListeners.add((_width, _height) -> {
             bind();
             Renderer.textureHashMap.remove("fbo").delete();
-            Renderer.textureHashMap.put("fbo", new Texture((int)_width, (int)_height));
+            Renderer.textureHashMap.put("fbo", new Texture((int)_width, (int)_height, GL_RGBA, null));
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").getID(), 0);
 
             glDeleteRenderbuffers(rboDepth);

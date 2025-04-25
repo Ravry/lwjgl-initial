@@ -72,6 +72,7 @@ public class Input {
     private static double lastMouseX, lastMouseY;
     private static float xoffset, yoffset;
     public static float sensitivity = 4.f;
+    public static float currentMouseX, currentMouseY;
 
     public static void update() {
         double[] xpos = new double[1];
@@ -84,10 +85,13 @@ public class Input {
             firstMouse = false;
         }
 
-        xoffset = (float) (xpos[0] - lastMouseX);
-        yoffset = (float) (lastMouseY - ypos[0]);
-        lastMouseX = xpos[0];
-        lastMouseY = ypos[0];
+        currentMouseX = (float)xpos[0];
+        currentMouseY = (float)ypos[0];
+
+        xoffset = (float) (currentMouseX - lastMouseX);
+        yoffset = (float) (lastMouseY - currentMouseY);
+        lastMouseX = currentMouseX;
+        lastMouseY = currentMouseY;
 
         xoffset *= sensitivity * Time.deltaTime;
         yoffset *= sensitivity * Time.deltaTime;

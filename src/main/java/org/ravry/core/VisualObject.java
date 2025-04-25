@@ -6,6 +6,7 @@ import org.ravry.graphics.buffers.VBO;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
+import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
 
 public class VisualObject extends EngineObject {
     public enum Primitive {
@@ -39,7 +40,7 @@ public class VisualObject extends EngineObject {
         vbo.bind();
         ebo.bind();
 
-        vbo.data(mesh.vertices);
+        vbo.data(mesh.vertices, GL_STATIC_DRAW);
 
         vao.attrib(0, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
         vao.attrib(1, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);

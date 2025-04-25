@@ -76,19 +76,11 @@ public class Window {
     public void run() {
         glClearColor(.2f, .2f, .2f, 1.f);
         double lastTime = 0.0f;
-        double fpsTimer = 0.0f;
 
         while(!glfwWindowShouldClose(handle)) {
             double currentTime = glfwGetTime();
             Time.deltaTime = (float)currentTime - (float)lastTime;
             lastTime = currentTime;
-            fpsTimer += Time.deltaTime;
-
-            if (fpsTimer >= 2.f)
-            {
-                glfwSetWindowTitle(handle, "FPS: " + (int)(1.0/Time.deltaTime));
-                fpsTimer = 0.f;
-            }
 
             update();
 
