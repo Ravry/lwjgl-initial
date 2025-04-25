@@ -1,6 +1,7 @@
 package org.ravry.gui;
 
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTAlignedQuad;
@@ -41,6 +42,8 @@ public class Text extends GUIElement {
     public static HashMap<String, FontData> fonts = new HashMap<>();
     public static final int FONT_SIZE = 16;
     public static final int BITMAP_SIZE = 256;
+    private static VAO vao;
+    private static VBO vbo;
 
     public static void init(String ... fontPaths) {
         Renderer.shaderHashMap.put("font", new Shader("resources/shader/font/vertex.glsl", "resources/shader/font/fragment.glsl"));
@@ -63,19 +66,29 @@ public class Text extends GUIElement {
                 Logger.LOG(ERROR_LOG, "failed to load font");
             }
         }
+
+        vao = new VAO();
+        vbo = new VBO();
+
+        vao.bind();
+        vbo.bind();
+        float[] vertices = new float[4 * 4];
+        vbo.data(vertices, GL_DYNAMIC_DRAW);
+        vao.attrib(0, 2, GL_FLOAT, false, 4 * Float.BYTES, 0);
+        vao.attrib(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2 * Float.BYTES);
+        vao.unbind();
+        vbo.unbind();
+
         initialized = true;
     }
 
     public String literal;
     public String font;
-    public Color color;
+    public Vector4f color;
     public float x;
     public float y;
 
-    private VAO vao;
-    private VBO vbo;
-
-    public Text(float x, float y, String literal, String font, Color color) {
+    public Text(float x, float y, String literal, String font, Vector4f color) {
         if (!initialized)
             throw new RuntimeException("text renderer has not been initialized");
 
@@ -84,17 +97,6 @@ public class Text extends GUIElement {
         this.literal = literal;
         this.font = font;
         this.color = color;
-
-        vao = new VAO();
-        vbo = new VBO();
-
-        vao.bind();
-        vbo.bind();
-
-        float[] vertices = new float[4 * 4];
-        vbo.data(vertices, GL_DYNAMIC_DRAW);
-        vao.attrib(0, 2, GL_FLOAT, false, 4 * Float.BYTES, 0);
-        vao.attrib(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2 * Float.BYTES);
     }
 
     @Override
@@ -109,7 +111,7 @@ public class Text extends GUIElement {
         Renderer.shaderHashMap.get("font")
                 .use()
                 .setUniformMat4("projection", parent.getProjection())
-                .setUniformVec4("fontColor", new Vector4f(color.getRed(), color.getGreen(), color.getBlue(), 1));
+                .setUniformVec4("fontColor", color);
 
         fontData.texture.bind();
         vao.bind();
@@ -139,9 +141,9 @@ public class Text extends GUIElement {
 
                 float[] vertices = {
                         quadX0, quadY0, quad.s0(), quad.t0(),
-                        quadX1, quadY0, quad.s1(), quad.t0(),
+                        quadX0, quadY1, quad.s0(), quad.t1(),
                         quadX1, quadY1, quad.s1(), quad.t1(),
-                        quadX0, quadY1, quad.s0(), quad.t1()
+                        quadX1, quadY0, quad.s1(), quad.t0()
                 };
 
                 vbo.bind();

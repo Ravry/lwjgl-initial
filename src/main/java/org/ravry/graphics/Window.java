@@ -48,16 +48,11 @@ public class Window {
 
         glViewport(0, 0, width, height);
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        renderer = new Renderer((float)width, (float)height);
-
         glfwSetKeyCallback(handle, Input.inputCallback());
         glfwSetScrollCallback(handle, Input.scrollCallback());
         glfwSetFramebufferSizeCallback(handle, Window.resizeWindow());
+
+        renderer = new Renderer((float)width, (float)height);
     }
 
 

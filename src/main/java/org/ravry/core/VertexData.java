@@ -10,7 +10,7 @@ public class VertexData {
         };
 
         public static int[] indices = new int[] {
-                0, 1, 2,
+                0, 2, 1,
                 1, 2, 3
         };
     }

@@ -1,11 +1,8 @@
 package org.ravry.graphics;
 
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
+import org.joml.*;
+import org.lwjgl.system.MemoryStack;
 import org.ravry.core.Camera;
-import org.ravry.core.Input;
 import org.ravry.core.Time;
 import org.ravry.core.VisualObject;
 import org.ravry.graphics.buffers.FBO;
@@ -13,7 +10,8 @@ import org.ravry.gui.Canvas;
 import org.ravry.gui.Text;
 import org.ravry.utilities.Utils;
 
-import java.awt.*;
+import java.lang.Math;
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -54,7 +52,7 @@ public class Renderer {
         textureHashMap.put("checkered", new Texture("resources/texture/.png"));
 
         visualObjectHashMap.put("grid", new VisualObject(VisualObject.Primitive.Quad));
-        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(90.0f)).scale(20.f);
+        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(-90.0f)).scale(20.f);
 
         visualObjectHashMap.put("object", new VisualObject(VisualObject.Primitive.Cube));
         visualObjectHashMap.get("object").matrix.scale(1);
@@ -63,10 +61,17 @@ public class Renderer {
         Text.init(arial);
 
         canvas = new Canvas(width, height);
-        canvas.addChildren(new Text(50, 50, "", arial, Color.GREEN));
+        canvas.addChildren(new Text(50, 50, "", arial, new Vector4f(1)));
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
 
         glClearColor(.2f, .2f, .2f, 1.f);
-
         glActiveTexture(GL_TEXTURE0);
     }
 
@@ -78,6 +83,7 @@ public class Renderer {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glDisable(GL_CULL_FACE);
         glDepthMask(false);
         shaderHashMap.get("cubemap")
                 .use()
@@ -89,6 +95,7 @@ public class Renderer {
         textureHashMap.get("cubemap").unbind();
         shaderHashMap.get("cubemap").unuse();
         glDepthMask(true);
+        glEnable(GL_CULL_FACE);
 
         shaderHashMap.get("grid")
                 .use()
