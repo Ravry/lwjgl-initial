@@ -13,7 +13,7 @@ public class FBO extends BufferObject {
         id = glGenFramebuffers();
         bind();
         Renderer.textureHashMap.put("fbo", new Texture(width, height));
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").id, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").getID(), 0);
 
         rboDepth = glGenRenderbuffers();
         glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
@@ -29,7 +29,7 @@ public class FBO extends BufferObject {
             bind();
             Renderer.textureHashMap.remove("fbo").delete();
             Renderer.textureHashMap.put("fbo", new Texture((int)_width, (int)_height));
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").id, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Renderer.textureHashMap.get("fbo").getID(), 0);
 
             glDeleteRenderbuffers(rboDepth);
             rboDepth = glGenRenderbuffers();

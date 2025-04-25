@@ -1,5 +1,6 @@
 package org.ravry.graphics;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import org.ravry.utilities.Logger;
 
@@ -8,14 +9,17 @@ import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_R;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.ravry.utilities.Logger.LOG_STATE.ERROR_LOG;
 
 public class Texture {
-    private final String FALLBACK_TEXTURE = "resources/texture/checkered.png";
-    public int id;
+    private int id;
+    private int target;
 
     class ImageData {
         public ByteBuffer pixels;
@@ -42,7 +46,15 @@ public class Texture {
             if (pixels == null)
             {
                 Logger.LOG(ERROR_LOG, "failed to load image - " + stbi_failure_reason());
-                return loadFile(FALLBACK_TEXTURE);
+                pixels = BufferUtils.createByteBuffer(4 * 2 * 2);
+                pixels.put(new byte[] {
+                    (byte)200, 0, (byte)200, (byte)255,
+                    (byte)100, 0, (byte)100, (byte)255,
+                    (byte)100, 0, (byte)100, (byte)255,
+                    (byte)200, 0, (byte)200, (byte)255
+                });
+                pixels.flip();
+                return new ImageData(pixels, 2, 2);
             }
 
             width = w.get();
@@ -55,36 +67,61 @@ public class Texture {
     public Texture(String textureFile) {
         ImageData imageData = loadFile(textureFile);
 
+        target = GL_TEXTURE_2D;
         id = glGenTextures();
         bind();
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageData.width, imageData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData.pixels);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexImage2D(target, 0, GL_RGBA, imageData.width, imageData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData.pixels);
+        glGenerateMipmap(target);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         stbi_image_free(imageData.pixels);
     }
+
     public Texture(int width, int height) {
+        target = GL_TEXTURE_2D;
         id = glGenTextures();
         bind();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(target, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
+    public Texture(String[] files) {
+        target = GL_TEXTURE_CUBE_MAP;
+        id = glGenTextures();
+        bind();
+
+        for (int i = 0; i < files.length; i++) {
+            ImageData imageData = loadFile(files[i]);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, imageData.width, imageData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData.pixels);
+            stbi_image_free(imageData.pixels);
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     }
 
     public void bind() {
-        glBindTexture(GL_TEXTURE_2D, id);
+        glBindTexture(target, id);
     }
 
     public void unbind() {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(target, 0);
     }
 
     public void delete() {
         glDeleteTextures(id);
+    }
+
+    public int getID() {
+        return id;
     }
 }

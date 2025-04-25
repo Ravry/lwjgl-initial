@@ -1,5 +1,7 @@
 package org.ravry.graphics;
 
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.ravry.core.Camera;
 import org.ravry.core.VisualObject;
@@ -11,14 +13,14 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 
 public class Renderer {
-    private Camera camera;
-    private FBO framebuffer;
-    public static HashMap<String, Texture> textureHashMap = new HashMap<>();
     public static HashMap<String, Shader> shaderHashMap = new HashMap<>();
+    public static HashMap<String, Texture> textureHashMap = new HashMap<>();
     public static HashMap<String, VisualObject> visualObjectHashMap = new HashMap<>();
 
+    private final Camera camera;
+    private final FBO framebuffer;
+
     public Renderer(float width, float height) {
-        stbi_set_flip_vertically_on_load(true);
 
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
 
@@ -27,11 +29,21 @@ public class Renderer {
         shaderHashMap.put("grid", new Shader("resources/shader/grid/vertex.glsl", "resources/shader/grid/fragment.glsl"));
         shaderHashMap.put("default", new Shader("resources/shader/default/vertex.glsl", "resources/shader/default/fragment.glsl"));
         shaderHashMap.put("screen", new Shader("resources/shader/screen/vertex.glsl", "resources/shader/screen/fragment.glsl"));
+        shaderHashMap.put("cubemap", new Shader("resources/shader/cubemap/vertex.glsl", "resources/shader/cubemap/fragment.glsl"));
 
-        textureHashMap.put("checkered", new Texture("resources/texture/checkered.png"));
+        textureHashMap.put("cubemap", new Texture(new String[] {
+                "resources/texture/cubemap/right.png",
+                "resources/texture/cubemap/left.png",
+                "resources/texture/cubemap/top.png",
+                "resources/texture/cubemap/bottom.png",
+                "resources/texture/cubemap/front.png",
+                "resources/texture/cubemap/back.png",
+        }));
+        stbi_set_flip_vertically_on_load(true);
+        textureHashMap.put("checkered", new Texture("resources/texture/.png"));
 
         visualObjectHashMap.put("grid", new VisualObject(VisualObject.Primitive.Quad));
-        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(90.0f)).scale(200.f);
+        visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(90.0f)).scale(50.f);
 
         visualObjectHashMap.put("object", new VisualObject(VisualObject.Primitive.Cube));
         visualObjectHashMap.get("object").matrix.scale(1);
@@ -43,6 +55,18 @@ public class Renderer {
         framebuffer.bind();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glDepthMask(false);
+        shaderHashMap.get("cubemap")
+                .use()
+                .setUniformMat4("view", new Matrix4f(new Matrix3f(camera.getViewMatrix())))
+                .setUniformMat4("projection", camera.projection)
+                .setUniformInt("skybox", 0);
+        textureHashMap.get("cubemap").bind();
+        visualObjectHashMap.get("object").render();
+        textureHashMap.get("cubemap").unbind();
+        shaderHashMap.get("cubemap").unuse();
+        glDepthMask(true);
 
         shaderHashMap.get("grid")
                 .use()
