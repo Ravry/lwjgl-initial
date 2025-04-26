@@ -5,13 +5,16 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.glfw.GLFWScrollCallbackI;
+import org.ravry.graphics.Renderer;
 import org.ravry.graphics.Window;
+import org.ravry.utilities.Logger;
 
 import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.ravry.utilities.Logger.LOG_STATE.DEFAULT_LOG;
 
 public class Input {
     /**
@@ -30,10 +33,15 @@ public class Input {
             if (action == GLFW.GLFW_PRESS) {
                 keyDown[key] = true;
 
-                if (key == GLFW_KEY_C) {
-                    setCursorVisibility(!cursorEnabled);
+                switch (key)
+                {
+                    case GLFW_KEY_C -> {
+                        setCursorVisibility(!cursorEnabled);
+                    }
+                    case GLFW_KEY_G -> {
+                        Renderer.g_Active = (Renderer.g_Active + 1) % Renderer.g_Buffers.length;
+                    }
                 }
-
             } else if (action == GLFW.GLFW_RELEASE) {
                 keyDown[key] = false;
             } else if (action == GLFW.GLFW_REPEAT) {

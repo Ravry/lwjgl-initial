@@ -16,6 +16,7 @@ import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL32.GL_TEXTURE_2D_MULTISAMPLE;
 import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 
 public class Renderer {
@@ -24,16 +25,22 @@ public class Renderer {
     public static HashMap<String, VisualObject> visualObjectHashMap = new HashMap<>();
 
     private final Camera camera;
+
     private final FBO framebufferMSAA;
     private final FBO framebufferIntermediate;
+    public static int g_Active = 0;
+    public static final String[] g_Buffers = {
+        "g_Albedo",
+        "g_Depth"
+    };
 
     private Canvas canvas;
 
     public Renderer(float width, float height) {
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
 
-        framebufferMSAA = new FBO((int)width, (int)height, true);
-        framebufferIntermediate = new FBO((int)width, (int)height, false);
+        framebufferMSAA = new FBO((int)width, (int)height, GL_TEXTURE_2D_MULTISAMPLE);
+        framebufferIntermediate = new FBO((int)width, (int)height, GL_TEXTURE_2D);
 
         shaderHashMap.put("grid", new Shader("resources/shader/grid/vertex.glsl", "resources/shader/grid/fragment.glsl"));
         shaderHashMap.put("default", new Shader("resources/shader/default/vertex.glsl", "resources/shader/default/fragment.glsl"));
@@ -61,7 +68,7 @@ public class Renderer {
         Text.init(arial);
 
         canvas = new Canvas(width, height);
-        canvas.addChildren(new Text(50, 50, "", arial, new Vector4f(1)));
+        canvas.addChildren(new Text(50, 50, "", arial, new Vector4f(0, 0, 0, 1)));
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
@@ -77,7 +84,7 @@ public class Renderer {
 
     public void render() {
         camera.update();
-        ((Text)(canvas.children.get(0))).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\n";
+        ((Text)(canvas.children.get(0))).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\nG-Buffer: " + Renderer.g_Buffers[Renderer.g_Active];
 
         framebufferMSAA.bind();
 
@@ -97,15 +104,6 @@ public class Renderer {
         glDepthMask(true);
         glEnable(GL_CULL_FACE);
 
-        shaderHashMap.get("grid")
-                .use()
-                .setUniformMat4("model", visualObjectHashMap.get("grid").matrix)
-                .setUniformMat4("view", camera.getViewMatrix())
-                .setUniformMat4("projection", camera.projection)
-                .setUniformVec3("cameraPos", new Vector3f(camera.front.x, 0, camera.front.z));
-        visualObjectHashMap.get("grid").render();
-        shaderHashMap.get("grid").unuse();
-
         shaderHashMap.get("default")
                 .use()
                 .setUniformMat4("model", visualObjectHashMap.get("object").matrix)
@@ -116,9 +114,20 @@ public class Renderer {
         textureHashMap.get("checkered").unbind();
         shaderHashMap.get("default").unuse();
 
+        shaderHashMap.get("grid")
+                .use()
+                .setUniformMat4("model", visualObjectHashMap.get("grid").matrix)
+                .setUniformMat4("view", camera.getViewMatrix())
+                .setUniformMat4("projection", camera.projection)
+                .setUniformVec3("cameraPos", new Vector3f(camera.front.x, 0, camera.front.z));
+        visualObjectHashMap.get("grid").render();
+        shaderHashMap.get("grid").unuse();
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferMSAA.getID());
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebufferIntermediate.getID());
-        glBlitFramebuffer(0, 0, Window.width, Window.height, 0, 0, Window.width, Window.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        framebufferMSAA.blit(GL_COLOR_ATTACHMENT0, GL_COLOR_BUFFER_BIT);
+        framebufferMSAA.blit(0, GL_DEPTH_BUFFER_BIT);
 
         framebufferMSAA.unbind();
 
@@ -126,10 +135,16 @@ public class Renderer {
 
         glDisable(GL_DEPTH_TEST);
 
-        shaderHashMap.get("screen").use().setUniformInt("_MainTex", 0);
-        textureHashMap.get("fboIntermediate").bind();
+        framebufferIntermediate.g_Depth.bind(GL_TEXTURE1);
+        framebufferIntermediate.g_Albedo.bind(GL_TEXTURE0);
+
+        shaderHashMap.get("screen").use()
+                .setUniformInt("_MainTex", 0)
+                .setUniformInt("_DepthTex",  1)
+                .setUniformInt("g_Active", g_Active);
+
         visualObjectHashMap.get("grid").render();
-        textureHashMap.get("fboIntermediate").unbind();
+
         shaderHashMap.get("screen").unuse();
 
         canvas.render(null);
@@ -139,6 +154,9 @@ public class Renderer {
 
     public void terminate() {
         canvas.delete();
+
+        framebufferIntermediate.delete();
+        framebufferMSAA.delete();
 
         visualObjectHashMap.forEach((_, object) -> {
             object.delete();

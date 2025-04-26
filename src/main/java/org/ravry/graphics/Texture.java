@@ -11,8 +11,7 @@ import java.nio.IntBuffer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_R;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
 import static org.lwjgl.opengl.GL32.glTexImage2DMultisample;
 import static org.lwjgl.stb.STBImage.*;
@@ -97,11 +96,18 @@ public class Texture {
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
-    public Texture(int width, int height, int format, int samples) {
-        target = GL_TEXTURE_2D_MULTISAMPLE;
+    public Texture(int width, int height, int format, int target, int type) {
+        this.target = target;
         id = glGenTextures();
         bind();
-        glTexImage2DMultisample(target, samples, format, width, height, true);
+        if (target == GL_TEXTURE_2D_MULTISAMPLE) {
+            glTexImage2DMultisample(target, 4, format, width, height, true);
+        }
+        else {
+            glTexImage2D(target,  0, format, width, height, 0, format, type, NULL);
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
         unbind();
     }
 
@@ -124,6 +130,11 @@ public class Texture {
     }
 
     public void bind() {
+        glBindTexture(target, id);
+    }
+
+    public void bind(int slot) {
+        glActiveTexture(slot);
         glBindTexture(target, id);
     }
 

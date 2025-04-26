@@ -48,11 +48,11 @@ public class Window {
 
         glViewport(0, 0, width, height);
 
+        renderer = new Renderer((float)width, (float)height);
+
         glfwSetKeyCallback(handle, Input.inputCallback());
         glfwSetScrollCallback(handle, Input.scrollCallback());
         glfwSetFramebufferSizeCallback(handle, Window.resizeWindow());
-
-        renderer = new Renderer((float)width, (float)height);
     }
 
 
