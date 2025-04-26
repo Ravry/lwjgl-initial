@@ -2,6 +2,7 @@ package org.ravry.graphics;
 
 import org.joml.*;
 import org.ravry.core.Camera;
+import org.ravry.core.Input;
 import org.ravry.core.Time;
 import org.ravry.core.VisualObject;
 import org.ravry.graphics.buffers.FBO;
@@ -35,6 +36,10 @@ public class Renderer {
     private final Canvas canvas;
 
     public Renderer(float width, float height) {
+        Texture.init();
+        String arial = Utils.getSystemFontPath("arial");
+        Text.init(arial);
+
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
 
         framebufferMSAA = new FBO((int)width, (int)height, GL_TEXTURE_2D_MULTISAMPLE);
@@ -60,10 +65,7 @@ public class Renderer {
         visualObjectHashMap.get("grid").matrix.rotateX((float)Math.toRadians(-90.0f)).scale(20.f);
 
         visualObjectHashMap.put("object", new VisualObject(VisualObject.Primitive.Cube));
-        visualObjectHashMap.get("object").matrix.scale(1);
-
-        String arial = Utils.getSystemFontPath("arial");
-        Text.init(arial);
+        visualObjectHashMap.get("object").matrix.translate(0, .5f, 0);
 
         canvas = new Canvas(width, height);
         canvas.addChildren(new Text(50, 50, "", arial, new Vector4f(0, 0, 0, 1)));
@@ -82,7 +84,23 @@ public class Renderer {
 
     public void render() {
         camera.update();
-        ((Text)(canvas.children.getFirst())).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\nG-Buffer: " + Renderer.g_Buffers[Renderer.g_Active];
+        ((Text)(canvas.children.getFirst())).literal =
+                "FPS:               " + (int)(1.0f/ Time.deltaTime) +
+                "\nG-Buffer:        " + Renderer.g_Buffers[Renderer.g_Active] +
+                "\nMouse:          vec2(" +
+                            String.format("%.0f", Input.currentMouseX) + ", " +
+                            String.format("%.0f", Input.currentMouseY) +
+                        ")" +
+                "\nCam:             vec3(" +
+                            String.format("%.2f", camera.getPosition().x) + ", " +
+                            String.format("%.2f", camera.getPosition().y) + ", " +
+                            String.format("%.2f", camera.getPosition().z) +
+                        ")" +
+                "\nCenter:          vec3(" +
+                            String.format("%.2f", camera.front.x) + ", " +
+                            String.format("%.2f", camera.front.y) + ", " +
+                            String.format("%.2f", camera.front.z) +
+                        ")";
 
         framebufferMSAA.bind();
 

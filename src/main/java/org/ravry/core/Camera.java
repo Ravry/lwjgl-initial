@@ -39,11 +39,6 @@ public class Camera extends EngineObject {
         this.projection = new Matrix4f().perspective((float)Math.toRadians(fov), width/height, near, far);
         this.cameraMode = cameraMode;
 
-        Input.scrollListeners.add((offsetX, offsetY) -> {
-            distance -= offsetY;
-            distance = Math.clamp(distance, 1.f, MAX_DISTANCE);
-        });
-
         Window.resizeListeners.add((_width, _height) -> {
             projection = new Matrix4f().perspective((float)Math.toRadians(fov), _width/_height, near, far);
         });
@@ -83,8 +78,8 @@ public class Camera extends EngineObject {
     private void handleMouse() {
         Vector2f mouseOffset = Input.getMouseOffset();
 
-        yaw -= mouseOffset.x * Time.deltaTime;
-        pitch -= mouseOffset.y * Time.deltaTime;
+        yaw -= mouseOffset.x * Input.sensitivity * Time.deltaTime;
+        pitch += mouseOffset.y * Input.sensitivity * Time.deltaTime;
 
         if (pitch > -20.0f) pitch = -20.0f;
         if (pitch < -80.0f) pitch = -80.0f;
@@ -101,8 +96,8 @@ public class Camera extends EngineObject {
         _right.cross(worldUp);
         _right.normalize();
 
-        Vector3f scaledFront = new Vector3f(_front).mul(mouseOffset.y * Time.deltaTime * .25f * (distance / MAX_DISTANCE));
-        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * Time.deltaTime * .25f * (distance / MAX_DISTANCE));
+        Vector3f scaledFront = new Vector3f(_front).mul(-mouseOffset.y * Time.deltaTime * .75f * (distance / MAX_DISTANCE));
+        Vector3f scaledRight = new Vector3f(_right).mul(mouseOffset.x * Time.deltaTime * .75f * (distance / MAX_DISTANCE));
 
         Vector3f _move = new Vector3f(scaledFront).add(scaledRight);
 
@@ -110,6 +105,9 @@ public class Camera extends EngineObject {
     }
 
     private void handleOrbitMouse() {
+        distance -= Input.scrollOffsetY;
+        distance = Math.clamp(distance, 1.f, MAX_DISTANCE);
+
         float x = (float) (distance * Math.sin(Math.toRadians(pitch)) * Math.sin(Math.toRadians(yaw)));
         float y = (float) (distance * Math.cos(Math.toRadians(pitch)));
         float z = (float) (distance * Math.sin(Math.toRadians(pitch)) * Math.cos(Math.toRadians(yaw)));

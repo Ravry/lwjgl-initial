@@ -1,11 +1,13 @@
 package org.ravry.graphics;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWErrorCallbackI;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallbackI;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
 import org.ravry.core.Input;
 import org.ravry.core.Time;
+import org.ravry.utilities.Logger;
 
 import java.awt.image.MemoryImageSource;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_MULTISAMPLE;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.ravry.utilities.Logger.LOG_STATE.ERROR_LOG;
 
 public class Window {
     private static long handle;
@@ -50,11 +53,19 @@ public class Window {
 
         renderer = new Renderer((float)width, (float)height);
 
-        glfwSetKeyCallback(handle, Input.inputCallback());
-        glfwSetScrollCallback(handle, Input.scrollCallback());
+        glfwSetErrorCallback(Window.errorCallback());
         glfwSetFramebufferSizeCallback(handle, Window.resizeWindow());
+        glfwSetKeyCallback(handle, Input.inputCallback());
+        glfwSetMouseButtonCallback(handle, Input.mouseButtonCallback());
+        glfwSetCursorPosCallback(handle, Input.mousePosCallback());
+        glfwSetScrollCallback(handle, Input.scrollCallback());
     }
 
+    private static GLFWErrorCallbackI errorCallback() {
+        return (error, description) -> {
+            Logger.LOG(ERROR_LOG, error + " - " + description);
+        };
+    }
 
     public interface ResizeListener {
         void onResize(float width, float height);
@@ -71,8 +82,8 @@ public class Window {
     }
 
     private void update() {
-        glfwPollEvents();
         Input.update();
+        glfwPollEvents();
     }
 
     public void run() {

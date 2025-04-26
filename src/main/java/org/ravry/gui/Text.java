@@ -60,7 +60,7 @@ public class Text extends GUIElement {
                 STBTTBakedChar.Buffer chardata = STBTTBakedChar.malloc(96);
                 ByteBuffer bitmapBuffer = BufferUtils.createByteBuffer(BITMAP_SIZE * BITMAP_SIZE);
                 stbtt_BakeFontBitmap(fontData, FONT_SIZE, bitmapBuffer, BITMAP_SIZE, BITMAP_SIZE, 32, chardata);
-                fonts.put(fontPath, new FontData(chardata, new Texture(BITMAP_SIZE, BITMAP_SIZE, GL_RED, bitmapBuffer)));
+                fonts.put(fontPath, new FontData(chardata, new Texture(BITMAP_SIZE, BITMAP_SIZE, GL_RED, GL_LINEAR, false, bitmapBuffer)));
             }
             catch (IOException ex) {
                 Logger.LOG(ERROR_LOG, "failed to load font");

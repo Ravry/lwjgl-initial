@@ -2,9 +2,7 @@ package org.ravry.core;
 
 import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWKeyCallbackI;
-import org.lwjgl.glfw.GLFWScrollCallbackI;
+import org.lwjgl.glfw.*;
 import org.ravry.graphics.Renderer;
 import org.ravry.graphics.Window;
 import org.ravry.utilities.Logger;
@@ -35,8 +33,8 @@ public class Input {
 
                 switch (key)
                 {
-                    case GLFW_KEY_C -> {
-                        setCursorVisibility(!cursorEnabled);
+                    case GLFW_KEY_ESCAPE -> {
+                        glfwSetWindowShouldClose(window, true);
                     }
                     case GLFW_KEY_G -> {
                         Renderer.g_Active = (Renderer.g_Active + 1) % Renderer.g_Buffers.length;
@@ -76,41 +74,41 @@ public class Input {
      * ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝███████║███████╗    ██║ ╚═╝ ██║╚██████╔╝ ╚████╔╝ ███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║
      * ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝    ╚═╝     ╚═╝ ╚═════╝   ╚═══╝  ╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝
      */
-    private static boolean firstMouse;
     private static double lastMouseX, lastMouseY;
-    private static float xoffset, yoffset;
+    private static float offsetX, offsetY;
+    public static float scrollOffsetX, scrollOffsetY;
     public static float sensitivity = 4.f;
     public static float currentMouseX, currentMouseY;
 
     public static void update() {
-        double[] xpos = new double[1];
-        double[] ypos = new double[1];
-        glfwGetCursorPos(Window.getHandle(), xpos, ypos);
-
-        if (firstMouse) {
-            lastMouseX = xpos[0];
-            lastMouseY = ypos[0];
-            firstMouse = false;
-        }
-
-        currentMouseX = (float)xpos[0];
-        currentMouseY = (float)ypos[0];
-
-        xoffset = (float) (currentMouseX - lastMouseX);
-        yoffset = (float) (lastMouseY - currentMouseY);
-        lastMouseX = currentMouseX;
-        lastMouseY = currentMouseY;
-
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
+        offsetX = 0;
+        offsetY = 0;
+        scrollOffsetX = 0;
+        scrollOffsetY = 0;
     }
 
     public static Vector2f getMouseOffset() {
-        return new Vector2f(xoffset, yoffset);
+        return new Vector2f(offsetX, offsetY);
     }
 
+    public static GLFWMouseButtonCallbackI mouseButtonCallback() {
+        return (window, button, action, mods) -> {
 
+        };
+    }
 
+    public static GLFWCursorPosCallbackI mousePosCallback() {
+        return (long window, double xpos, double ypos) -> {
+            currentMouseX = (float)xpos;
+            currentMouseY = (float)ypos;
+
+            offsetX += currentMouseX - (float)lastMouseX;
+            offsetY += currentMouseY - (float)lastMouseY;
+
+            lastMouseX = xpos;
+            lastMouseY = ypos;
+        };
+    }
 
     /**
      * ███████╗ ██████╗██████╗  ██████╗ ██╗     ██╗     ██╗███╗   ██╗ ██████╗
@@ -120,17 +118,12 @@ public class Input {
      * ███████║╚██████╗██║  ██║╚██████╔╝███████╗███████╗██║██║ ╚████║╚██████╔╝
      * ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝
      */
-    public interface ScrollListener {
-        void onScroll(float xOffset, float yOffset);
-    }
-    public static List<ScrollListener> scrollListeners = new ArrayList<>();
     public static GLFWScrollCallbackI scrollCallback() {
         return (window, xoffset, yoffset) -> {
             float scrollX = (float)xoffset;
             float scrollY = (float)yoffset;
-            for (var scrollListener : scrollListeners) {
-                scrollListener.onScroll(scrollX, scrollY);
-            }
+            scrollOffsetX += scrollX;
+            scrollOffsetY += scrollY;
         };
     }
 }
