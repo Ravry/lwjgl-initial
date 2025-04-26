@@ -1,7 +1,6 @@
 package org.ravry.graphics;
 
 import org.joml.*;
-import org.lwjgl.system.MemoryStack;
 import org.ravry.core.Camera;
 import org.ravry.core.Time;
 import org.ravry.core.VisualObject;
@@ -11,7 +10,6 @@ import org.ravry.gui.Text;
 import org.ravry.utilities.Utils;
 
 import java.lang.Math;
-import java.nio.FloatBuffer;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -34,7 +32,7 @@ public class Renderer {
         "g_Depth"
     };
 
-    private Canvas canvas;
+    private final Canvas canvas;
 
     public Renderer(float width, float height) {
         camera = new Camera(width, height, Camera.CameraMode.Orbit);
@@ -84,7 +82,7 @@ public class Renderer {
 
     public void render() {
         camera.update();
-        ((Text)(canvas.children.get(0))).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\nG-Buffer: " + Renderer.g_Buffers[Renderer.g_Active];
+        ((Text)(canvas.children.getFirst())).literal = "FPS: " + (int)(1.0f/ Time.deltaTime) + "\nG-Buffer: " + Renderer.g_Buffers[Renderer.g_Active];
 
         framebufferMSAA.bind();
 
@@ -158,16 +156,10 @@ public class Renderer {
         framebufferIntermediate.delete();
         framebufferMSAA.delete();
 
-        visualObjectHashMap.forEach((_, object) -> {
-            object.delete();
-        });
+        visualObjectHashMap.forEach((_, object) -> object.delete());
 
-        shaderHashMap.forEach((_, shader) -> {
-            shader.delete();
-        });
+        shaderHashMap.forEach((_, shader) -> shader.delete());
 
-        textureHashMap.forEach((_, texture) -> {
-            texture.delete();
-        });
+        textureHashMap.forEach((_, texture) -> texture.delete());
     }
 }
